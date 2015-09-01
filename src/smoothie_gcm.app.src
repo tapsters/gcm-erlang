@@ -1,14 +1,13 @@
-{application, gcm, [
+{application, smoothie_gcm, [
     {description, "An Erlang client for Google Cloud Messaging (GCM)"},
     {vsn, "1.0.1"},
-    {registered, [gcm_sup]},
+    {registered, [sm_gcm_sup]},
     {applications, [
         kernel,
         stdlib,
         inets,
-        ssl,
-        jsx
+        ssl
     ]},
-    {mod, {gcm_app, []}},
+    {mod, {sm_gcm_app, []}},
     {env, []}
 ]}.

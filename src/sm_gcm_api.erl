@@ -1,4 +1,4 @@
--module(gcm_api).
+-module(sm_gcm_api).
 -export([push/3]).
 
 -define(BASEURL, "https://android.googleapis.com/gcm/send").
@@ -11,12 +11,12 @@
 
 -spec push(regids(),message(),string()) -> {'error',any()} | {'noreply','unknown'} | {'ok',result()}.
 push(RegIds, Message, Key) ->
-    Request = jsx:encode([{<<"registration_ids">>, RegIds}|Message]),
+    Request = sm:json_enc([{<<"registration_ids">>, RegIds}|Message]),
     ApiKey = string:concat("key=", Key),
 
     try httpc:request(post, {?BASEURL, [{"Authorization", ApiKey}], "application/json", Request}, [], []) of
         {ok, {{_, 200, _}, _Headers, Body}} ->
-            Json = jsx:decode(response_to_binary(Body)),
+            Json = sm:json_dec(response_to_binary(Body)),
             error_logger:info_msg("Result was: ~p~n", [Json]),
             {ok, result_from(Json)};
         {ok, {{_, 400, _}, _, Body}} ->

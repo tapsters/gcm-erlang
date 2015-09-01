@@ -1,4 +1,4 @@
--module(gcm_app).
+-module(sm_gcm_app).
 
 -behaviour(application).
 
@@ -6,7 +6,7 @@
 
 -spec start(_, _) -> {ok, pid()}.
 start(_StartType, _StartArgs) ->
-    gcm_sup:start_link().
+    sm_gcm_sup:start_link().
 
 -spec stop(_) -> ok.
 stop(_State) ->

@@ -1,4 +1,4 @@
--module(gcm_sup).
+-module(sm_gcm_sup).
 -behaviour(supervisor).
 
 -export([start_link/0, start_child/2]).
@@ -18,5 +18,5 @@ start_child(Name, ApiKey) ->
 
 -spec init([]) -> {ok, {{supervisor:strategy(), 5, 10}, [supervisor:child_spec()]}}.
 init([]) ->
-    {ok, {{simple_one_for_one, 5, 10}, [?CHILD(gcm, worker)]}}.
+    {ok, {{simple_one_for_one, 5, 10}, [?CHILD(sm_gcm, worker)]}}.
 

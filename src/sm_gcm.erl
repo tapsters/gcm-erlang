@@ -1,4 +1,4 @@
--module(gcm).
+-module(sm_gcm).
 -behaviour(gen_server).
 
 -export([start/2, stop/1, start_link/2]).
@@ -14,7 +14,7 @@
 -record(state, {key}).
 
 start(Name, Key) ->
-    gcm_sup:start_child(Name, Key).
+    sm_gcm_sup:start_child(Name, Key).
 
 stop(Name) ->
     gen_server:call(Name, stop).
@@ -70,7 +70,7 @@ do_push(_, _, _, 0) ->
 
 do_push(RegIds, Message, Key, Retry) ->
     error_logger:info_msg("Sending message: ~p to reg ids: ~p retries: ~p.~n", [Message, RegIds, Retry]),
-    case gcm_api:push(RegIds, Message, Key) of
+    case sm_gcm_api:push(RegIds, Message, Key) of
         {ok, GCMResult} ->
             handle_result(GCMResult, RegIds);
         {error, {retry, RetryAfter}} ->

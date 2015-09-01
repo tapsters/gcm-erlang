@@ -1,106 +1,95 @@
-gcm-erlang
-=======
+smoothie-gcm
+============
 
-[![Build Status](https://api.travis-ci.org/pdincau/gcm-erlang.png)](https://travis-ci.org/pdincau/gcm-erlang)
+This is fork of [gcm-erlang](https://github.com/pdincau/gcm-erlang) optimized to use with [smoothie](https://github.com/tapsters/smoothie).
 
 This software provides an Erlang client for [`Google Cloud Messaging`](http://developer.android.com/google/gcm/index.html "Google Cloud Messaging for Android").
 
+### Features
 
-### What you can do with gcm-erlang:
+Using `smoothie-gcm` you can:
 
-Using `gcm-erlang` you can:
+* Start several `gen_servers` representing different `GCM applications` defined by different `GCM API keys`
+* Send notification messages to Android mobile devices registered to your specific application and registered to `GCM` using a specific `registration id`
 
-1. start several `gen_servers` representing different `GCM applications` defined by different `GCM API keys`
-2. send notification messages to Android mobile devices registered to your specific application and registered to `GCM` using a specific `registration id`
+So far `smoothie-gcm` does only provide support for JSON messages since GCM does not allow to send multicast messages using plain text.
 
-So far `gcm-erlang` does only provide support for JSON messages since GCM does not allow to send multicast messages using plain text.
-
-### How to compile:
-
-The first thing you have to do is to compile all the Erlang files using `rebar`.
-
-    $ ./rebar get-deps compile
-
-### How to use with rebar:
+### Setting Up
 
 You can use gcm_app as a dependency in your rebar.config:
 
-    {deps , [
-        {gcm, ".*", {git, "https://github.com/pdincau/gcm-erlang.git", {tag, "1.0.1"}}}
-    ]}.
+```Erlang
+{deps, [
+    {gcm, ".*", {git, "https://github.com/tapsters/smoothie-gcm.git", {tag, "master"}}}
+]}.
+```
 
-###How to run tests:
+### Starting GCM API Worker (one for each GCM application)
 
-    ./rebar compile && ./rebar skip_deps=true eunit && ./run-dialyzer.sh
+While `smoothie-gcm` is running you can start several supervised gen_servers, one for each GCM application. Every gen_server is defined by an atom used internally for registration and by a `GCM API key`.
 
-### How to run the application gcm-erlang:
-
-Once all the Erlang files are compiled you can start the application `gcm-erlang`. This application depends on other applications  so it is mandatory to  start them as well.
-
-    $ erl -pa deps/*/ebin -pa ebin
-    1> application:start(inets).
-    ok
-    2> application:start(jsx).
-    ok
-    3> ssl:start().
-    ok
-    4> application:start(gcm).
-    ok
-
-### How to start/stop different gen_servers under application gcm-erlang (one for each GCM application):
-
-While `gcm-erlang` is running you can start several supervised gen_servers, one for each GCM application. Every gen_server is defined by an atom used internally for registration and by a `GCM API key`.
-
-    3> gcm:start(foo, "myapikey").
-    {ok,<0.60.0>}
-    4> gcm:start(bar, "myotherapikey").
-    {ok,<0.65.0>}
-    5> gcm:start(baz, "mylastapikey").
-    {ok,<0.79.0>}
+```Erlang
+1> sm_gcm:start(foo, "myapikey").
+{ok,<0.60.0>}
+2> sm_gcm:start(bar, "myotherapikey").
+{ok,<0.65.0>}
+```
 
 You can stop a `gen_server` representing a GCM Application using:
 
-    6> gcm:stop(foo).
+```Erlang
+3> sm_gcm:stop(foo).
+```
 
-### How to send a GCM message using from a specific GCM application:
+### Sending Messages
 
 At any time you can send a GCM message to one or more mobile devices by calling:
 
-    7> gcm:push(RegisteredName, RegIds, Message).
+```Erlang
+4> sm_gcm:push(RegisteredName, RegIds, Message).
+```
 
 or by calling:
 
-    7> gcm:sync_push(RegisteredName, RegIds, Message).
+```Erlang
+5> sm_gcm:sync_push(RegisteredName, RegIds, Message).
+```
 
 Where `RegistereName` is the atom used during registration, `RegIds` is a list (max 1000 elements) of Registration Ids specified as Erlang binaries (e.g., `<<"APA91bHun4MxP5egoKMwt2KZFBaFUH-1RYqx...">>`) and `Message` is an Erlang term representing the data you want to send to the device.
 
-The JSON message is built using `jsx` in the module `gcm.erl` and in the end will have the following form:
+The JSON message is built [yaws-json2](https://github.com/tapsters/yaws-json2) in the module `sm_gcm.erl` and in the end will have the following form:
 
-    {
-      "registration_ids" : ["APA91bHun4MxP5egoKMwt2KZFBaFUH-1RYqx..."],
-      "data" : {
-        "message" : "a message"
-      },
-      "time_to_live" : 3600,
-      "collapse_key" : "your_update"
-    }
+```JavaScript
+{
+  "registration_ids" : ["APA91bHun4MxP5egoKMwt2KZFBaFUH-1RYqx..."],
+  "data" : {
+    "message" : "a message"
+  },
+  "time_to_live" : 3600,
+  "collapse_key" : "your_update"
+}
+```
 
 You can send this message using:
 
-    8> gcm:push(RegisteredName, RegIds, [{<<"data">>, [
-    8>     {<<"message">>, <<"a message">>}
-    8> ]}, {<<"time_to_live">>,3600}, {<<"collapse_key">>,<<"your_update">>}]).
+```Erlang
+6> sm_gcm:push(RegisteredName, RegIds, [{<<"data">>, [
+6>     {<<"message">>, <<"a message">>}
+6> ]}, {<<"time_to_live">>,3600}, {<<"collapse_key">>,<<"your_update">>}]).
+```
 
 or simply:
 
-    8> gcm:push(RegisteredName, RegIds, [{<<"data">>, [
-    8>     {<<"message">>, <<"a message">>}
-    8> ]}]).
+```Erlang
+7> sm_gcm:push(RegisteredName, RegIds, [{<<"data">>, [
+7>     {<<"message">>, <<"a message">>}
+7> ]}]).
+```
 
-`gcm-erlang` will push the message for you to `Google Cloud Messaging` servers and will parse the JSON provided as result.
+`smoothie-gcm` will push the message for you to `Google Cloud Messaging` servers and will parse the JSON provided as result.
 
 In order to understand errors see: [Interpreting an error response](http://developer.android.com/google/gcm/gcm.html#response).
 
-### Note:
+### Note
 
 Some of the concepts I used for building this Erlang application are based on this [`blog post`](http://tiliman.wordpress.com/2013/01/02/google-cloud-messaging-with-erlang/) and on this [`Erlang application for APN`](https://github.com/extend/ex_apns).
