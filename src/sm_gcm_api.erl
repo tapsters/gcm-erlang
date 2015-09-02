@@ -71,7 +71,6 @@ retry_after_from(Headers) ->
                 {Time, _} when is_integer(Time) ->
                     Time;
                 {error, no_integer} ->
-                    Date = qdate:to_unixtime(RetryTime),
-                    Date - qdate:unixtime()
+                    sm:parse_http_date(RetryTime) - sm:now()
             end
     end.
