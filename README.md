@@ -20,7 +20,7 @@ You can use gcm_app as a dependency in your rebar.config:
 
 ```Erlang
 {deps, [
-    {gcm, ".*", {git, "https://github.com/tapsters/smoothie-gcm.git", {tag, "master"}}}
+    {smoothie_gcm, ".*", {git, "https://github.com/tapsters/smoothie-gcm.git", {tag, "master"}}}
 ]}.
 ```
 
@@ -73,17 +73,15 @@ The JSON message is built [yaws-json2](https://github.com/tapsters/yaws-json2) i
 You can send this message using:
 
 ```Erlang
-6> sm_gcm:push(RegisteredName, RegIds, [{<<"data">>, [
-6>     {<<"message">>, <<"a message">>}
-6> ]}, {<<"time_to_live">>,3600}, {<<"collapse_key">>,<<"your_update">>}]).
+6> sm_gcm:push(default, RegIds1, {struct, [{"data", {struct, [{"message", "a message"}]}},
+6>                                         {"time_to_live", 3600},
+6>                                         {"collapse_key", "your_update"}]}).
 ```
 
 or simply:
 
 ```Erlang
-7> sm_gcm:push(RegisteredName, RegIds, [{<<"data">>, [
-7>     {<<"message">>, <<"a message">>}
-7> ]}]).
+7> sm_gcm:push(default, RegIds1, {struct, [{"data", {struct, [{"message", "a message"}]}}]}).
 ```
 
 `smoothie-gcm` will push the message for you to `Google Cloud Messaging` servers and will parse the JSON provided as result.
