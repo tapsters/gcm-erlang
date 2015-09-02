@@ -1,7 +1,7 @@
 -module(sm_gcm_api).
 -export([push/3]).
 
--define(BASEURL, "https://android.googleapis.com/gcm/send").
+-define(BASEURL, "http://android.googleapis.com/gcm/send").
 
 -type header()  :: {string(), string()}.
 -type headers() :: [header(),...].
@@ -10,14 +10,15 @@
 -type result()  :: {number(), non_neg_integer(), non_neg_integer(), non_neg_integer(), [any()]}.
 
 -spec push(regids(),message(),string()) -> {'error',any()} | {'noreply','unknown'} | {'ok',result()}.
-push(RegIds, Message, Key) ->
-    Request = sm:json_enc([{<<"registration_ids">>, RegIds}|Message]),
+push(RegIds, {struct, MessageProps}, Key) ->
+    Request = lists:flatten(sm:json_enc({struct, [{"registration_ids", {array, RegIds}}|MessageProps]})),
     ApiKey = string:concat("key=", Key),
 
     try httpc:request(post, {?BASEURL, [{"Authorization", ApiKey}], "application/json", Request}, [], []) of
         {ok, {{_, 200, _}, _Headers, Body}} ->
-            Json = sm:json_dec(response_to_binary(Body)),
-            error_logger:info_msg("Result was: ~p~n", [Json]),
+            io:format("RESPONSE BODY: ~p~n", [Body]),
+            Json = sm:json_dec(Body),
+            %%error_logger:info_msg("Result was: ~p~n", [Json]),
             {ok, result_from(Json)};
         {ok, {{_, 400, _}, _, Body}} ->
             error_logger:error_msg("Error in request. Reason was: Bad Request - ~p~n", [Body]),
@@ -44,21 +45,14 @@ push(RegIds, Message, Key) ->
             {error, Exception}
     end.
 
--spec response_to_binary(binary() | list()) -> binary().
-response_to_binary(Json) when is_binary(Json) ->
-    Json;
-
-response_to_binary(Json) when is_list(Json) ->
-    list_to_binary(Json).
-
--spec result_from([{binary(),any()}]) -> result().
-result_from(Json) ->
+-spec result_from([{struct,list()}]) -> result().
+result_from({struct, Props}) ->
     {
-      proplists:get_value(<<"multicast_id">>, Json),
-      proplists:get_value(<<"success">>, Json),
-      proplists:get_value(<<"failure">>, Json),
-      proplists:get_value(<<"canonical_ids">>, Json),
-      proplists:get_value(<<"results">>, Json)
+      proplists:get_value("multicast_id", Props),
+      proplists:get_value("success", Props),
+      proplists:get_value("failure", Props),
+      proplists:get_value("canonical_ids", Props),
+      proplists:get_value("results", Props)
     }.
 
 -spec retry_after_from(headers()) -> 'no_retry' | non_neg_integer().

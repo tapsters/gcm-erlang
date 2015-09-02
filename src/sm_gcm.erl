@@ -69,7 +69,7 @@ do_push(_, _, _, 0) ->
     ok;
 
 do_push(RegIds, Message, Key, Retry) ->
-    error_logger:info_msg("Sending message: ~p to reg ids: ~p retries: ~p.~n", [Message, RegIds, Retry]),
+    %%error_logger:info_msg("Sending message: ~p to reg ids: ~p retries: ~p.~n", [Message, RegIds, Retry]),
     case sm_gcm_api:push(RegIds, Message, Key) of
         {ok, GCMResult} ->
             handle_result(GCMResult, RegIds);
@@ -81,7 +81,7 @@ do_push(RegIds, Message, Key, Retry) ->
     end.
 
 handle_result(GCMResult, RegIds) ->
-    {_MulticastId, _SuccessesNumber, _FailuresNumber, _CanonicalIdsNumber, Results} = GCMResult,
+    {_MulticastId, _SuccessesNumber, _FailuresNumber, _CanonicalIdsNumber, {array, Results}} = GCMResult,
     lists:map(fun({Result, RegId}) -> {RegId, parse(Result)} end, lists:zip(Results, RegIds)).
 
 do_backoff(RetryAfter, RegIds, Message, Key, Retry) ->
@@ -93,11 +93,11 @@ do_backoff(RetryAfter, RegIds, Message, Key, Retry) ->
             timer:apply_after(RetryAfter * 1000, ?MODULE, do_push, [RegIds, Message, Key, Retry - 1])
     end.
 
-parse(Result) ->
+parse({struct, Props}) ->
     case {
-      proplists:get_value(<<"error">>, Result),
-      proplists:get_value(<<"message_id">>, Result),
-      proplists:get_value(<<"registration_id">>, Result)
+      proplists:get_value(<<"error">>, Props),
+      proplists:get_value(<<"message_id">>, Props),
+      proplists:get_value(<<"registration_id">>, Props)
      } of
         {Error, undefined, undefined} ->
             Error;
