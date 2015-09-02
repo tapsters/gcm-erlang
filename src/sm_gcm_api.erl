@@ -16,7 +16,6 @@ push(RegIds, {struct, MessageProps}, Key) ->
 
     try httpc:request(post, {?BASEURL, [{"Authorization", ApiKey}], "application/json", Request}, [], []) of
         {ok, {{_, 200, _}, _Headers, Body}} ->
-            io:format("RESPONSE BODY: ~p~n", [Body]),
             Json = sm:json_dec(Body),
             %%error_logger:info_msg("Result was: ~p~n", [Json]),
             {ok, result_from(Json)};
