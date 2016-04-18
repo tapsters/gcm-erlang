@@ -1,7 +1,7 @@
 -module(sm_gcm_api).
 -export([push/3]).
 
--define(BASEURL, "http://android.googleapis.com/gcm/send").
+-define(BASEURL, "https://gcm-http.googleapis.com/gcm/send").
 
 -type header()  :: {string(), string()}.
 -type headers() :: [header(),...].
